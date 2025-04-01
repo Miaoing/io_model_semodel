@@ -189,6 +189,7 @@ class SimpleMaterialData(object):
             bytes += b
             b = file.read(1)
         self.diffuseMap = bytes.decode("utf-8")
+        print(self.diffuseMap)
 
         # Normal map image
         bytes = b''
@@ -205,12 +206,12 @@ class SimpleMaterialData(object):
         # Try to find and extract image name from the _images.txt file
         with open(mat_images_txt, 'r') as f:
             for line in f:
-                if 'unk_semantic_0x4' in line:
+                if 'unk_semantic_0x4' in line or 'unk_semantic_0x58' in line:
                     normal_map_name = line.split(',')[1].strip()
                     break
         if normal_map_name is not None:
             self.normalMap = self.diffuseMap.replace(os.path.basename(self.diffuseMap), f"{normal_map_name}_calculated_norm.png")
-
+        print(self.normalMap)
         # Specular map image
         bytes = b''
         b = file.read(1)

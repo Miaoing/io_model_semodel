@@ -44,23 +44,23 @@ def load(self, context, filepath=""):
             pass
 
         try:
-            normal_map_path = __build_image_path__(filepath, mat.inputData.normalMap)
-            if os.path.exists(normal_map_path):
-                material_normal_map = new_mat.node_tree.nodes.new("ShaderNodeTexImage")
-                normal_map_node = new_mat.node_tree.nodes.new("ShaderNodeNormalMap")
-                material_normal_map.image = bpy.data.images.load(normal_map_path)
-                material_normal_map.image.colorspace_settings.name = 'Non-Color'
+            if mat.inputData.normalMap != '':
+                normal_map_path = __build_image_path__(filepath, mat.inputData.normalMap)
+                if os.path.exists(normal_map_path):
+                    material_normal_map = new_mat.node_tree.nodes.new("ShaderNodeTexImage")
+                    normal_map_node = new_mat.node_tree.nodes.new("ShaderNodeNormalMap")
+                    material_normal_map.image = bpy.data.images.load(normal_map_path)
+                    material_normal_map.image.colorspace_settings.name = 'Non-Color'
+
+                    new_mat.node_tree.links.new(
+                        normal_map_node.inputs["Color"], material_normal_map.outputs["Color"])
+                    new_mat.node_tree.links.new(
+                        bsdf_shader.inputs["Normal"], normal_map_node.outputs["Normal"])
         except RuntimeError:
             pass
 
         new_mat.node_tree.links.new(
             bsdf_shader.inputs["Base Color"], material_color_map.outputs["Color"])
-        if os.path.exists(normal_map_path):
-            new_mat.node_tree.links.new(
-                normal_map_node.inputs["Color"], material_normal_map.outputs["Color"])
-            new_mat.node_tree.links.new(
-                bsdf_shader.inputs["Normal"], normal_map_node.outputs["Normal"])
-
         mesh_mats.append(new_mat)
 
     for mesh in model.meshes:
