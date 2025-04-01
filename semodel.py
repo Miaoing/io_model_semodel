@@ -1,7 +1,9 @@
 import time
 import struct
+import os
 
 # <pep8 compliant>
+
 
 LOG_READ_TIME = False
 LOG_WRITE_TIME = False
@@ -171,15 +173,15 @@ class Face_t(object):
 class SimpleMaterialData(object):
     __slots__ = ('diffuseMap', 'normalMap', 'specularMap')
 
-    def __init__(self, file=None):
+    def __init__(self, file=None, path=None):
         self.diffuseMap = ""
         self.normalMap = ""
         self.specularMap = ""
 
         if file is not None:
-            self.load(file)
+            self.load(file, path)
 
-    def load(self, file):
+    def load(self, file, path):
         # Diffuse map image
         bytes = b''
         b = file.read(1)
@@ -187,6 +189,7 @@ class SimpleMaterialData(object):
             bytes += b
             b = file.read(1)
         self.diffuseMap = bytes.decode("utf-8")
+
         # Normal map image
         bytes = b''
         b = file.read(1)
@@ -194,6 +197,20 @@ class SimpleMaterialData(object):
             bytes += b
             b = file.read(1)
         self.normalMap = bytes.decode("utf-8")
+
+
+        mat_folder = os.path.normpath(self.diffuseMap).split(os.sep)[-2]
+        mat_images_txt = os.path.join(os.path.dirname(path), mat_folder + '_images.txt')
+        normal_map_name = None
+        # Try to find and extract image name from the _images.txt file
+        with open(mat_images_txt, 'r') as f:
+            for line in f:
+                if 'unk_semantic_0x4' in line:
+                    normal_map_name = line.split(',')[1].strip()
+                    break
+        if normal_map_name is not None:
+            self.normalMap = f"_images\\\\{mat_folder}\\\\{normal_map_name}_calculated_norm.png"
+
         # Specular map image
         bytes = b''
         b = file.read(1)
@@ -220,15 +237,15 @@ class SimpleMaterialData(object):
 class Material(object):
     __slots__ = ('name', 'isSimpleMaterial', 'inputData')
 
-    def __init__(self, file=None):
+    def __init__(self, file=None, path=None):
         self.name = ""
         self.isSimpleMaterial = True
         self.inputData = SimpleMaterialData()
 
         if file is not None:
-            self.load(file)
+            self.load(file, path)
 
-    def load(self, file):
+    def load(self, file, path):
         bytes = b''
         b = file.read(1)
         while not b == b'\x00':
@@ -241,7 +258,7 @@ class Material(object):
 
         # If simple material, decode simple payload
         if (self.isSimpleMaterial):
-            self.inputData = SimpleMaterialData(file)
+            self.inputData = SimpleMaterialData(file, path)
 
     def save(self, file):
         bytes = struct.pack('%dsB' % (len(self.name) + 1),
@@ -734,7 +751,8 @@ class Model(object):
         if dataPresenceFlags & SEMODEL_PRESENCE_FLAGS.SEMODEL_PRESENCE_MATERIALS:
             # Load material entries
             for i in xrange(self.header.matCount):
-                self.materials[i] = Material(file)
+                print(self.header.matCount)
+                self.materials[i] = Material(file, path)
 
         file.close()
 
