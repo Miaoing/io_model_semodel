@@ -209,7 +209,7 @@ class SimpleMaterialData(object):
                     normal_map_name = line.split(',')[1].strip()
                     break
         if normal_map_name is not None:
-            self.normalMap = f"_images\\\\{mat_folder}\\\\{normal_map_name}_calculated_norm.png"
+            self.normalMap = self.diffuseMap.replace(os.path.basename(self.diffuseMap), f"{normal_map_name}_calculated_norm.png")
 
         # Specular map image
         bytes = b''
